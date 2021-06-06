@@ -1,10 +1,10 @@
 #pragma once
 
-#include "functions/quorem_preinv.cu"
-#include "functions/divexact.cu"
-#include "functions/chinese.cu"
-#include "functions/multi_modexp.cu"
-#include "modnum/modnum_monty_cios.cu"
+#include "functions/quorem_preinv.cuh"
+#include "functions/divexact.cuh"
+#include "functions/chinese.cuh"
+#include "functions/multi_modexp.cuh"
+#include "modnum/modnum_monty_cios.cuh"
 
 namespace cuFIXNUM {
 

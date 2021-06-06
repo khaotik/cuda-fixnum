@@ -50,4 +50,4 @@ operator<<(std::ostream &os, const fixnum_array<fixnum> *fn_arr);
 
 } // End namespace cuFIXNUM
 
-#include "fixnum_array.cu"
+#include "fixnum_array-inl.cu"

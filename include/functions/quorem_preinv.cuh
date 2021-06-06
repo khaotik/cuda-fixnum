@@ -1,6 +1,6 @@
 #pragma once
 
-#include "functions/quorem.cu"
+#include "functions/quorem.cuh"
 
 namespace cuFIXNUM {
 

@@ -8,14 +8,14 @@
 #include <string>
 #include <sstream>
 
-#include "array/fixnum_array.h"
-#include "fixnum/word_fixnum.cu"
-#include "fixnum/warp_fixnum.cu"
-#include "modnum/modnum_monty_cios.cu"
-#include "modnum/modnum_monty_redc.cu"
-#include "functions/modexp.cu"
-#include "functions/paillier_encrypt.cu"
-#include "functions/paillier_decrypt.cu"
+#include "array/fixnum_array.cuh"
+#include "fixnum/word_fixnum.cuh"
+#include "fixnum/warp_fixnum.cuh"
+#include "modnum/modnum_monty_cios.cuh"
+#include "modnum/modnum_monty_redc.cuh"
+#include "functions/modexp.cuh"
+#include "functions/paillier_encrypt.cuh"
+#include "functions/paillier_decrypt.cuh"
 
 using namespace std;
 using namespace cuFIXNUM;

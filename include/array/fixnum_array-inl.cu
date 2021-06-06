@@ -7,7 +7,7 @@
 #include <algorithm>
 
 #include "util/cuda_wrap.h"
-#include "fixnum_array.h"
+#include "fixnum_array.cuh"
 
 namespace cuFIXNUM {
 

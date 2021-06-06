@@ -1,6 +1,6 @@
 #pragma once
 
-#include "functions/modinv.cu"
+#include "functions/modinv.cuh"
 
 namespace cuFIXNUM {
 
