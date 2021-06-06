@@ -34,7 +34,13 @@ tests/paillier_*
 *.i*86
 *.x86_64
 *.hex
+cuda-caps
+bench/bench
+tests/test-suite
 
 # Debug files
 *.dSYM/
 *.class
+
+# Misc
+.cudaArch
