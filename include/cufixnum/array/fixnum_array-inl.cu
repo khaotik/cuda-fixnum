@@ -267,18 +267,14 @@ template< typename fixnum >
 template< template <typename> class Func, typename... Args >
 void
 fixnum_array<fixnum>::map(Args... args) {
-    // TODO: Set this to the number of threads on a single SM on the host GPU.
-    constexpr int BLOCK_SIZE = 192;
+    // TODO.opt this can be made faster by tuning carefully
+    int block_size = cuda_get_cores_per_sm();
 
     // FIXME: WARPSIZE should come from slot_layout
-    constexpr int WARPSIZE = 32;
-    // BLOCK_SIZE must be a multiple of warpSize
-    static_assert(!(BLOCK_SIZE % WARPSIZE),
-            "block size must be a multiple of warpSize");
+    // constexpr int WARPSIZE = 32;
 
     int nelts = std::min( { args->length()... } );
-
-    constexpr int fixnums_per_block = BLOCK_SIZE / fixnum::SLOT_WIDTH;
+    int fixnums_per_block = block_size / fixnum::SLOT_WIDTH;
 
     // FIXME: nblocks could be too big for a single kernel call to handle
     int nblocks = ceilquo(nelts, fixnums_per_block);
@@ -291,7 +287,7 @@ fixnum_array<fixnum>::map(Args... args) {
 //         cuda_stream_attach_mem(stream, ptr);
         cuda_check(cudaStreamSynchronize(stream), "stream sync");
 
-        dispatch<Func, fixnum ><<< nblocks, BLOCK_SIZE, 0, stream >>>(nelts, args->ptr...);
+        dispatch<Func, fixnum ><<< nblocks, block_size, 0, stream >>>(nelts, args->ptr...);
 
         cuda_check(cudaPeekAtLastError(), "kernel invocation/run");
         cuda_check(cudaStreamSynchronize(stream), "stream sync");

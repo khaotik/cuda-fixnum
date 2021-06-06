@@ -19,11 +19,43 @@ cuda_print_errmsg(cudaError err, const char *msg, const char *file, const int li
         exit(EXIT_FAILURE);
     }
 }
-
-} // End namespace cuFIXNUM
+}
 
 #define cuda_check(err, msg)                            \
     ::cuFIXNUM::cuda_print_errmsg(err, msg, __FILE__, __LINE__)
+
+namespace cuFIXNUM {
+
+static inline int
+cuda_get_cores_per_sm(int device_id=0) {
+  cudaDeviceProp prop;
+  cuda_check(cudaGetDeviceProperties(&prop, device_id), "cudaGetDeviceProperties");
+  int cores = 0;
+  switch (prop.major) {
+     case 3: // Kepler
+      cores = 192;
+      break;
+     case 5: // Maxwell
+      cores = 128;
+      break;
+     case 6: // Pascal
+      if ((prop.minor == 1) || (prop.minor == 2)) cores = 128;
+      else if (prop.minor == 0) cores = 64;
+      break;
+     case 7: // Volta and Turing
+      if ((prop.minor == 0) || (prop.minor == 5)) cores = 64;
+      break;
+     case 8: // Ampere
+      if (prop.minor == 0) cores = 64;
+      else if (prop.minor == 6) cores = 128;
+      break;
+     default:
+      break;
+  }
+  return cores;
+}
+
+} // End namespace cuFIXNUM
 
 #define cuda_malloc(ptr, size)                                  \
     cuda_check(cudaMalloc(ptr, size), "memory allocation")
