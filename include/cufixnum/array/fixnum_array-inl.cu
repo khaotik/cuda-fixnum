@@ -6,8 +6,8 @@
 // for min
 #include <algorithm>
 
-#include "util/cuda_wrap.h"
-#include "fixnum_array.cuh"
+#include "cufixnum/util/cuda_wrap.h"
+#include "cufixnum/array/fixnum_array.cuh"
 
 namespace cuFIXNUM {
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "slot_layout.cuh"
-#include "word_fixnum.cuh"
+#include "cufixnum/fixnum/slot_layout.cuh"
+#include "cufixnum/fixnum/word_fixnum.cuh"
 
 namespace cuFIXNUM {
 

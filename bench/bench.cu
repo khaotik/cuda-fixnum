@@ -2,12 +2,12 @@
 #include <cstring>
 #include <cassert>
 
-#include "fixnum/warp_fixnum.cuh"
-#include "array/fixnum_array.cuh"
-#include "functions/modexp.cuh"
-#include "functions/multi_modexp.cuh"
-#include "modnum/modnum_monty_redc.cuh"
-#include "modnum/modnum_monty_cios.cuh"
+#include "cufixnum/fixnum/warp_fixnum.cuh"
+#include "cufixnum/array/fixnum_array.cuh"
+#include "cufixnum/functions/modexp.cuh"
+#include "cufixnum/functions/multi_modexp.cuh"
+#include "cufixnum/modnum/modnum_monty_redc.cuh"
+#include "cufixnum/modnum/modnum_monty_cios.cuh"
 
 using namespace std;
 using namespace cuFIXNUM;

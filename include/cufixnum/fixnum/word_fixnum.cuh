@@ -1,6 +1,6 @@
 #pragma once
 
-#include "fixnum/internal/primitives-inl.cu"
+#include "cufixnum/fixnum/internal/primitives-inl.cu"
 
 namespace cuFIXNUM {
 
