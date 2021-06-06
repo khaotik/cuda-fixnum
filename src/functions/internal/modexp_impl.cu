@@ -39,7 +39,7 @@ namespace internal
      */
     // NB: For some reason we're not allowed to put this table in the definition
     // of bytes_to_window_size().
-    constexpr int BYTES_TO_K_ARY_WINDOW_SIZE_TABLE[] = {
+    constexpr __constant__ int BYTES_TO_K_ARY_WINDOW_SIZE_TABLE[] = {
        -1,
        -1, //bytes bits
         2, // 2^2    32
