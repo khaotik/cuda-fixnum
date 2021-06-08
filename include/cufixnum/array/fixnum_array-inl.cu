@@ -282,16 +282,16 @@ fixnum_array<fixnum>::map(Args... args) {
     // nblocks > 0 iff nelts > 0
     if (nblocks > 0) {
         cudaStream_t stream;
-        cuda_check(cudaStreamCreate(&stream), "create stream");
+        cuda_check(cudaStreamCreate(&stream));
 //         cuda_stream_attach_mem(stream, src->ptr);
 //         cuda_stream_attach_mem(stream, ptr);
-        cuda_check(cudaStreamSynchronize(stream), "stream sync");
+        cuda_check(cudaStreamSynchronize(stream));
 
         dispatch<Func, fixnum ><<< nblocks, block_size, 0, stream >>>(nelts, args->ptr...);
 
-        cuda_check(cudaPeekAtLastError(), "kernel invocation/run");
-        cuda_check(cudaStreamSynchronize(stream), "stream sync");
-        cuda_check(cudaStreamDestroy(stream), "stream destroy");
+        cuda_check(cudaPeekAtLastError());
+        cuda_check(cudaStreamSynchronize(stream));
+        cuda_check(cudaStreamDestroy(stream));
 
         // FIXME: Only synchronize when retrieving data from array
         cuda_device_synchronize();
