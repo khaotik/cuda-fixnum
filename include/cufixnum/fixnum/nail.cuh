@@ -1,24 +1,23 @@
+#pragma once
 
-
-template< typename digit >
+template< typename word_ft >
 __device__ __forceinline__ void
-hand_add(digit &r, digit a, digit b)
+hand_add(word_ft &r, word_ft a, word_ft b)
 {
     r = a + b;
 }
 
 
-template< typename digit, int NAIL_BITS >
-struct nail_data
-{
-    typedef typename digit digit;
-    // FIXME: This doesn't work if digit is signed
-    constexpr digit DIGIT_MAX = ~(digit)0;
-    constexpr int DIGIT_BITS = sizeof(digit) * 8;
-    constexpr int NON_NAIL_BITS = DIGIT_BITS - NAIL_BITS;
-    constexpr digit NAIL_MASK = DIGIT_MAX << NON_NAIL_BITS;
-    constexpr digit NON_NAIL_MASK = ~NAIL_MASK;
-    constexpr digit NON_NAIL_MAX = NON_NAIL_MASK; // alias
+template< typename word_ft, int NAIL_BITS >
+struct nail_data {
+  using digit_t = word_ft::digit_t;
+  // FIXME: This doesn't work if digit is signed
+  constexpr word_ft DIGIT_MAX = ~(digit_t)0;
+  constexpr int DIGIT_BITS = sizeof(digit_t) * 8;
+  constexpr int NON_NAIL_BITS = DIGIT_BITS - NAIL_BITS;
+  constexpr digit_t NAIL_MASK = DIGIT_MAX << NON_NAIL_BITS;
+  constexpr digit_t NON_NAIL_MASK = ~NAIL_MASK;
+  constexpr digit_t NON_NAIL_MAX = NON_NAIL_MASK; // alias
 
     // A nail must fit in an int.
     static_assert(NAIL_BITS > 0 && NAIL_BITS < sizeof(int) * 8,
@@ -27,11 +26,10 @@ struct nail_data
 
 
 // TODO: This is ugly
-template< typename digit, int NAIL_BITS >
+template< typename word_ft, int NAIL_BITS >
 __device__ __forceinline__ int
-hand_extract_nail(digit &r)
-{
-    typedef nail_data<digit, NAIL_BITS> nd;
+hand_extract_nail(word_ft &r) {
+    typedef nail_data<word_ft, NAIL_BITS> nd;
 
     // split r into nail and non-nail parts
     nail = r >> nd::NON_NAIL_BITS;
@@ -43,33 +41,32 @@ hand_extract_nail(digit &r)
 /*
  * Current cost of nail resolution is 4 vote functions.
  */
-template< typename digit, int NAIL_BITS >
+template< typename word_ft, int NAIL_BITS >
 __device__ int
-hand_resolve_nails(digit &r)
-{
+hand_resolve_nails(word_ft &r) {
     // TODO: Make this work with a general width
     constexpr int WIDTH = warpSize;
     // TODO: This is ugly
-    typedef nail_data<digit, NAIL_BITS> nd;
+    typedef nail_data<word_ft, NAIL_BITS> nd;
     typedef subwarp_data<WIDTH> subwarp;
 
     int nail, nail_hi;
-    nail = hand_extract_nail<digit, NAIL_BITS>(r);
+    nail = hand_extract_nail<word_ft, NAIL_BITS>(r);
     nail_hi = subwarp::shfl(nail, subwarp::toplaneIdx);
 
     nail = subwarp::shfl_up0(nail, 1);
     r += nail;
 
     // nail is 0 or 1 this time
-    nail = hand_extract_nail<digit, NAIL_BITS>(r);
+    nail = hand_extract_nail<word_ft, NAIL_BITS>(r);
 
     return nail_hi + hand_resolve_cy(r, nail, nd::NON_NAIL_MAX);
 }
 
 
-template< typename digit, int NAIL_BITS, int WIDTH = warpSize >
+template< typename word_ft, int NAIL_BITS, int WIDTH = warpSize >
 __device__ void
-hand_mullo_nail(digit &r, digit a, digit b)
+hand_mullo_nail(word_ft &r, word_ft a, word_ft b)
 {
     // FIXME: We shouldn't need nail bits to divide the width
     static_assert(!(WIDTH % NAIL_BITS), "nail bits does not divide width");
@@ -78,7 +75,7 @@ hand_mullo_nail(digit &r, digit a, digit b)
 
     typedef subwarp_data<WIDTH> subwarp;
 
-    digit n = 0; // nails
+    word_ft n = 0; // nails
 
     r = 0;
     for (int i = WIDTH - 1; i >= 0; --i) {
@@ -88,7 +85,7 @@ hand_mullo_nail(digit &r, digit a, digit b)
         // so overflow is likely in the first case and unlikely in the
         // second...
         for (int j = 0; j < NAIL_BITS; ++j, --i) {
-            digit aa = subwarp::shfl(a, i);
+            word_ft aa = subwarp::shfl(a, i);
 
             // TODO: See if using umad.wide improves this.
             umad_hi(r, aa, b, r);

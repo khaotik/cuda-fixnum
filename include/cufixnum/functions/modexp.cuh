@@ -7,8 +7,8 @@ namespace cuFIXNUM {
 
 template< typename modnum_tp >
 class modexp {
-    typedef typename modnum_tp::fixnum fixnum;
-    typedef typename fixnum::digit digit;
+    typedef typename modnum_tp::fixnum_t fixnum_t;
+    typedef typename fixnum_t::word_ft word_ft;
 
     // Decomposition of the exponent for use in the constant-width sliding-window
     // algorithm.  Allocated & deallocated once per thread block. Ref:
@@ -22,36 +22,36 @@ class modexp {
 
     // Helper functions for decomposing the exponent into windows.
     __device__ uint32_t
-    scan_window(int &hi_idx, fixnum &n, int max_window_bits);
+    scan_window(int &hi_idx, fixnum_t &n, int max_window_bits);
 
     __device__ int
-    scan_zero_window(int &hi_idx, fixnum &n);
+    scan_zero_window(int &hi_idx, fixnum_t &n);
 
     __device__ uint32_t
-    scan_nonzero_window(int &hi_idx, fixnum &n, int max_window_bits);
+    scan_nonzero_window(int &hi_idx, fixnum_t &n, int max_window_bits);
 
 public:
     /*
      * NB: It is assumed that the caller has reduced exp and mod using knowledge
      * of their properties (e.g. reducing exp modulo phi(mod), CRT, etc.).
      */
-    __device__ modexp(fixnum mod, fixnum exp);
+    __device__ modexp(fixnum_t mod, fixnum_t exp);
 
     __device__ ~modexp();
 
-    __device__ void operator()(fixnum &z, fixnum x) const;
+    __device__ void operator()(fixnum_t &z, fixnum_t x) const;
 };
 
 
 template< typename modnum_tp >
 __device__ uint32_t
-modexp<modnum_tp>::scan_nonzero_window(int &hi_idx, fixnum &n, int max_window_bits) {
+modexp<modnum_tp>::scan_nonzero_window(int &hi_idx, fixnum_t &n, int max_window_bits) {
     uint32_t bits_remaining = hi_idx + 1, win_bits;
-    digit w, lsd = fixnum::bottom_digit(n);
+    word_ft w, lsd = fixnum_t::bottom_digit(n);
 
     internal::min(win_bits, bits_remaining, max_window_bits);
-    digit::rem_2exp(w, lsd, win_bits);
-    fixnum::rshift(n, n, win_bits);
+    word_ft::rem_2exp(w, lsd, win_bits);
+    fixnum_t::rshift(n, n, win_bits);
     hi_idx -= win_bits;
 
     return w;
@@ -60,9 +60,9 @@ modexp<modnum_tp>::scan_nonzero_window(int &hi_idx, fixnum &n, int max_window_bi
 
 template< typename modnum_tp >
 __device__ int
-modexp<modnum_tp>::scan_zero_window(int &hi_idx, fixnum &n) {
-    int nzeros = fixnum::two_valuation(n);
-    fixnum::rshift(n, n, nzeros);
+modexp<modnum_tp>::scan_zero_window(int &hi_idx, fixnum_t &n) {
+    int nzeros = fixnum_t::two_valuation(n);
+    fixnum_t::rshift(n, n, nzeros);
     hi_idx -= nzeros;
     return nzeros;
 }
@@ -70,7 +70,7 @@ modexp<modnum_tp>::scan_zero_window(int &hi_idx, fixnum &n) {
 
 template< typename modnum_tp >
 __device__ uint32_t
-modexp<modnum_tp>::scan_window(int &hi_idx, fixnum &n, int max_window_bits) {
+modexp<modnum_tp>::scan_window(int &hi_idx, fixnum_t &n, int max_window_bits) {
     int nzeros;
     uint32_t window;
     nzeros = scan_zero_window(hi_idx, n);
@@ -83,30 +83,30 @@ modexp<modnum_tp>::scan_window(int &hi_idx, fixnum &n, int max_window_bits) {
 
 template< typename modnum_tp >
 __device__
-modexp<modnum_tp>::modexp(fixnum mod, fixnum exp)
+modexp<modnum_tp>::modexp(fixnum_t mod, fixnum_t exp)
     : modnum(mod)
 {
     // sliding window decomposition
     int hi_idx;
 
-    hi_idx = fixnum::msb(exp);
+    hi_idx = fixnum_t::msb(exp);
     window_size = internal::bits_to_clnw_window_size(hi_idx + 1);
 
     uint32_t *data;
-    int L = fixnum::layout::laneIdx();
+    int L = fixnum_t::layout::laneIdx();
     // TODO: This does one malloc per slot; the sliding window exponentiation
     // only really makes sense with fixed exponent, so we should be able to arrange
     // things so we only need one malloc per warp or even one malloc per thread block.
     if (L == 0) {
         int max_windows;
-        internal::ceilquo(max_windows, fixnum::BITS, window_size);
+        internal::ceilquo(max_windows, fixnum_t::BITS, window_size);
         // NB: Default heap on the device is 8MB.
         data = (uint32_t *) malloc(max_windows * sizeof(uint32_t));
         // FIXME: Handle this error properly.
         assert(data != nullptr);
     }
     // Broadcast data to each thread in the slot.
-    exp_wins = (uint32_t *) __shfl_sync(fixnum::layout::mask(), (uintptr_t)data, 0, fixnum::layout::WIDTH);
+    exp_wins = (uint32_t *) __shfl_sync(fixnum_t::layout::mask(), (uintptr_t)data, 0, fixnum_t::layout::WIDTH);
     uint32_t *ptr = exp_wins;
     while (hi_idx >= 0)
         *ptr++ = scan_window(hi_idx, exp, window_size);
@@ -118,14 +118,14 @@ template< typename modnum_tp >
 __device__
 modexp<modnum_tp>::~modexp()
 {
-    if (fixnum::layout::laneIdx() == 0)
+    if (fixnum_t::layout::laneIdx() == 0)
         free(exp_wins);
 }
 
 
 template< typename modnum_tp >
 __device__ void
-modexp<modnum_tp>::operator()(fixnum &z, fixnum x) const
+modexp<modnum_tp>::operator()(fixnum_t &z, fixnum_t x) const
 {
     static constexpr int WINDOW_MAX_BITS = 16;
     static constexpr int WINDOW_LEN_MASK = (1UL << WINDOW_MAX_BITS) - 1UL;
@@ -150,7 +150,7 @@ modexp<modnum_tp>::operator()(fixnum &z, fixnum x) const
 
     int window_max = 1U << window_size;
     /* G[t] = z^(2t + 1) t >= 0 (odd powers of z) */
-    fixnum G[WINDOW_MAX_VAL_REDUCED / 2];
+    fixnum_t G[WINDOW_MAX_VAL_REDUCED / 2];
     modnum.to_modnum(z, x);
     G[0] = z;
     if (window_size > 1) {

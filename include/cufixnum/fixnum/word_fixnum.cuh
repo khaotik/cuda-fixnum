@@ -4,66 +4,65 @@
 
 namespace cuFIXNUM {
 
-template< typename T >
+template<typename T>
 class word_fixnum {
 public:
-    typedef T digit;
-    using elem_t = T;
-    typedef word_fixnum fixnum;
+    using digit_t = T;
+    typedef word_fixnum word_ft;
 
     static constexpr int BYTES = sizeof(T);
     static constexpr int BITS = BYTES * 8;
 
 private:
-    digit x;
+    digit_t x;
 
     // TODO: These should be private
 public:
     __device__ __forceinline__
-    operator digit () const { return x; }
+    operator digit_t () const { return x; }
 
     __device__ __forceinline__
-    operator digit &() { return x; }
+    operator digit_t &() { return x; }
 
 public:
     __device__ __forceinline__
     word_fixnum() { }
 
     __device__ __forceinline__
-    word_fixnum(digit z) : x(z) { }
+    word_fixnum(digit_t z) : x(z) { }
 
     __device__ __forceinline__
     static void
-    set_if(fixnum &s, fixnum a, int cond) {
-        s = a & -(digit)cond;
+    set_if(word_ft &s, word_ft a, int cond) {
+        s = a & -(digit_t)cond;
     }
 
     // TODO: Implement/use something like numeric_limits<T>::max() for this
     // and most_negative().
     // FIXME: These two functions assume that T is unsigned.
     __device__ __forceinline__
-    static constexpr fixnum
-    most_positive() { return ~(fixnum)0; }
+    static constexpr word_ft
+    most_positive() { return ~(word_ft)0; }
 
     __device__ __forceinline__
-    static constexpr fixnum
+    static constexpr word_ft
     most_negative() { return zero(); };
 
     __device__ __forceinline__
-    static constexpr fixnum
-    zero() { return (fixnum)0; }
+    static constexpr word_ft
+    zero() { return (word_ft)0; }
 
     __device__ __forceinline__
-    static constexpr fixnum
-    one() { return (fixnum)1; }
+    static constexpr word_ft
+    one() { return (word_ft)1; }
 
     __device__ __forceinline__
-    static constexpr fixnum
-    two() { return (fixnum)2; }
+    static constexpr word_ft
+    two() { return (word_ft)2; }
 
     __device__ __forceinline__
     static void
-    add(fixnum &s, fixnum a, fixnum b) {
+    add(word_ft &s, word_ft a, word_ft b) {
         s = a + b;
     }
 
@@ -71,14 +70,14 @@ public:
     // functions of accumulating the carry into cy.
     __device__ __forceinline__
     static void
-    add_cy(fixnum &s, digit &cy, fixnum a, fixnum b) {
+    add_cy(word_ft &s, digit_t &cy, word_ft a, word_ft b) {
         s = a + b;
         cy = s < a;
     }
 
     __device__ __forceinline__
     static void
-    add_cyio(fixnum &s, digit &cy, fixnum a, fixnum b) {
+    add_cyio(word_ft &s, digit_t &cy, word_ft a, word_ft b) {
         s = a + cy;
         cy = s < a;
         s += b;
@@ -87,99 +86,99 @@ public:
 
     __device__ __forceinline__
     static void
-    add_cc(fixnum &s, fixnum a, fixnum b) {
+    add_cc(word_ft &s, word_ft a, word_ft b) {
         internal::add_cc(s, a, b);
     }
 
     __device__ __forceinline__
     static void
-    addc(fixnum &s, fixnum a, fixnum b) {
+    addc(word_ft &s, word_ft a, word_ft b) {
         internal::addc(s, a, b);
     }
 
     __device__ __forceinline__
     static void
-    addc_cc(fixnum &s, fixnum a, fixnum b) {
+    addc_cc(word_ft &s, word_ft a, word_ft b) {
         internal::addc_cc(s, a, b);
     }
 
     __device__ __forceinline__
     static void
-    incr(fixnum &s) {
+    incr(word_ft &s) {
         ++s;
     }
 
     __device__ __forceinline__
     static void
-    sub(fixnum &d, fixnum a, fixnum b) {
+    sub(word_ft &d, word_ft a, word_ft b) {
         d = a - b;
     }
 
     __device__ __forceinline__
     static void
-    sub_br(fixnum &d, digit &br, fixnum a, fixnum b) {
+    sub_br(word_ft &d, digit_t &br, word_ft a, word_ft b) {
         d = a - b;
         br = d > a;
     }
 
     __device__ __forceinline__
     static void
-    neg(fixnum &ma, fixnum a) {
+    neg(word_ft &ma, word_ft a) {
         ma = -a;
     }
 
     __device__ __forceinline__
     static void
-    mul_lo(fixnum &lo, fixnum a, fixnum b) {
+    mul_lo(word_ft &lo, word_ft a, word_ft b) {
         lo = a * b;
     }
 
     // hi * 2^32 + lo = a * b
     __device__ __forceinline__
     static void
-    mul_hi(fixnum &hi, fixnum a, fixnum b) {
+    mul_hi(word_ft &hi, word_ft a, word_ft b) {
         internal::mul_hi(hi, a, b);
     }
 
     // hi * 2^32 + lo = a * b
     __device__ __forceinline__
     static void
-    mul_wide(fixnum &hi, fixnum &lo, fixnum a, fixnum b) {
+    mul_wide(word_ft &hi, word_ft &lo, word_ft a, word_ft b) {
         internal::mul_wide(hi, lo, a, b);
     }
 
     // (hi, lo) = a * b + c
     __device__ __forceinline__
     static void
-    mad_wide(fixnum &hi, fixnum &lo, fixnum a, fixnum b, fixnum c) {
+    mad_wide(word_ft &hi, word_ft &lo, word_ft a, word_ft b, word_ft c) {
         internal::mad_wide(hi, lo, a, b, c);
     }
 
     // lo = a * b + c (mod 2^32)
     __device__ __forceinline__
     static void
-    mad_lo(fixnum &lo, fixnum a, fixnum b, fixnum c) {
+    mad_lo(word_ft &lo, word_ft a, word_ft b, word_ft c) {
         internal::mad_lo(lo, a, b, c);
     }
 
     // as above but increment cy by the mad carry
     __device__ __forceinline__
     static void
-    mad_lo_cy(fixnum &lo, fixnum &cy, fixnum a, fixnum b, fixnum c) {
+    mad_lo_cy(word_ft &lo, word_ft &cy, word_ft a, word_ft b, word_ft c) {
         internal::mad_lo_cc(lo, a, b, c);
         internal::addc(cy, cy, 0);
     }
 
     __device__ __forceinline__
     static void
-    mad_hi(fixnum &hi, fixnum a, fixnum b, fixnum c) {
+    mad_hi(word_ft &hi, word_ft a, word_ft b, word_ft c) {
         internal::mad_hi(hi, a, b, c);
     }
 
     // as above but increment cy by the mad carry
     __device__ __forceinline__
     static void
-    mad_hi_cy(fixnum &hi, fixnum &cy, fixnum a, fixnum b, fixnum c) {
+    mad_hi_cy(word_ft &hi, word_ft &cy, word_ft a, word_ft b, word_ft c) {
         internal::mad_hi_cc(hi, a, b, c);
         internal::addc(cy, cy, 0);
     }
@@ -187,29 +186,29 @@ public:
     // TODO: There are weird and only included for mul_wide
     __device__ __forceinline__
     static void
-    mad_lo_cc(fixnum &lo, fixnum a, fixnum b, fixnum c) {
+    mad_lo_cc(word_ft &lo, word_ft a, word_ft b, word_ft c) {
         internal::mad_lo_cc(lo, a, b, c);
     }
 
     // Returns the reciprocal for d.
     __device__ __forceinline__
-    static fixnum
-    quorem(fixnum &q, fixnum &r, fixnum n, fixnum d) {
+    static word_ft
+    quorem(word_ft &q, word_ft &r, word_ft n, word_ft d) {
         return quorem_wide(q, r, zero(), n, d);
     }
 
     // Accepts a reciprocal for d.
     __device__ __forceinline__
     static void
-    quorem(fixnum &q, fixnum &r, fixnum n, fixnum d, fixnum v) {
+    quorem(word_ft &q, word_ft &r, word_ft n, word_ft d, word_ft v) {
         quorem_wide(q, r, zero(), n, d, v);
     }
 
     // Returns the reciprocal for d.
     // NB: returns q = r = fixnum::MAX if n_hi > d.
     __device__ __forceinline__
-    static fixnum
-    quorem_wide(fixnum &q, fixnum &r, fixnum n_hi, fixnum n_lo, fixnum d) {
+    static word_ft
+    quorem_wide(word_ft &q, word_ft &r, word_ft n_hi, word_ft n_lo, word_ft d) {
         return internal::quorem_wide(q, r, n_hi, n_lo, d);
     }
 
@@ -217,13 +216,13 @@ public:
     // NB: returns q = r = fixnum::MAX if n_hi > d.
     __device__ __forceinline__
     static void
-    quorem_wide(fixnum &q, fixnum &r, fixnum n_hi, fixnum n_lo, fixnum d, fixnum v) {
+    quorem_wide(word_ft &q, word_ft &r, word_ft n_hi, word_ft n_lo, word_ft d, word_ft v) {
         internal::quorem_wide(q, r, n_hi, n_lo, d, v);
     }
 
     __device__ __forceinline__
     static void
-    rem_2exp(fixnum &r, fixnum n, unsigned k) {
+    rem_2exp(word_ft &r, word_ft n, unsigned k) {
         unsigned kp = BITS - k;
         r = (n << kp) >> kp;
     }
@@ -231,30 +230,30 @@ public:
     /*
      * Count Leading Zeroes in x.
      *
-     * TODO: This is not an intrinsic quality of a digit, so probably shouldn't
+     * TODO: This is not an intrinsic quality of a digit_t, so probably shouldn't
      * be in the interface.
      */
     __device__ __forceinline__
     static int
-    clz(fixnum x) {
+    clz(word_ft x) {
         return internal::clz(x);
     }
 
     /*
      * Count Trailing Zeroes in x.
      *
-     * TODO: This is not an intrinsic quality of a digit, so probably shouldn't
+     * TODO: This is not an intrinsic quality of a digit_t, so probably shouldn't
      * be in the interface.
      */
     __device__ __forceinline__
     static int
-    ctz(fixnum x) {
+    ctz(word_ft x) {
         return internal::ctz(x);
     }
 
     __device__ __forceinline__
     static int
-    cmp(fixnum a, fixnum b) {
+    cmp(word_ft a, word_ft b) {
         // TODO: There is probably a PTX instruction for this.
         int br = (a - b) > a;
         return br ? -br : (a != b);
@@ -262,49 +261,49 @@ public:
 
     __device__ __forceinline__
     static int
-    is_max(fixnum a) { return a == most_positive(); }
+    is_max(word_ft a) { return a == most_positive(); }
 
     __device__ __forceinline__
     static int
-    is_min(fixnum a) { return a == most_negative(); }
+    is_min(word_ft a) { return a == most_negative(); }
 
     __device__ __forceinline__
     static int
-    is_zero(fixnum a) { return a == zero(); }
+    is_zero(word_ft a) { return a == zero(); }
 
     __device__ __forceinline__
     static void
-    min(fixnum &m, fixnum a, fixnum b) {
+    min(word_ft &m, word_ft a, word_ft b) {
         internal::min(m, a, b);
     }
 
     __device__ __forceinline__
     static void
-    max(fixnum &m, fixnum a, fixnum b) {
+    max(word_ft &m, word_ft a, word_ft b) {
         internal::max(m, a, b);
     }
 
     __device__ __forceinline__
     static void
-    lshift(fixnum &z, fixnum x, unsigned b) {
+    lshift(word_ft &z, word_ft x, unsigned b) {
         z = x << b;
     }
 
     __device__ __forceinline__
     static void
-    lshift(fixnum &z, fixnum &overflow, fixnum x, unsigned b) {
+    lshift(word_ft &z, word_ft &overflow, word_ft x, unsigned b) {
         internal::lshift(overflow, z, 0, x, b);
     }
 
     __device__ __forceinline__
     static void
-    rshift(fixnum &z, fixnum x, unsigned b) {
+    rshift(word_ft &z, word_ft x, unsigned b) {
         z = x >> b;
     }
 
     __device__ __forceinline__
     static void
-    rshift(fixnum &z, fixnum &underflow, fixnum x, unsigned b) {
+    rshift(word_ft &z, word_ft &underflow, word_ft x, unsigned b) {
         internal::rshift(z, underflow, x, 0, b);
     }
 
@@ -315,7 +314,7 @@ public:
      */
     __device__ __forceinline__
     static void
-    modinv_2exp(fixnum &x, fixnum b) {
+    modinv_2exp(word_ft &x, word_ft b) {
         internal::modinv_2exp(x, b);
     }
 
@@ -341,15 +340,15 @@ public:
      * FIXME: This doesn't belong here.
      */
     __device__ __forceinline__
-    static fixnum
-    next_binary_power(fixnum x) {
+    static word_ft
+    next_binary_power(word_ft x) {
         return is_binary_power(x)
             ? x
-            : (fixnum)((digit)1 << (BITS - clz(x)));
+            : (word_ft)((digit_t)1 << (BITS - clz(x)));
     }
 };
 
-typedef word_fixnum<std::uint32_t> u32_fixnum;
-typedef word_fixnum<std::uint64_t> u64_fixnum;
+typedef word_fixnum<std::uint32_t> u32_word_ft;
+typedef word_fixnum<std::uint64_t> u64_word_ft;
 
 } // End namespace cuFIXNUM

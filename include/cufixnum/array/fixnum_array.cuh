@@ -6,7 +6,7 @@
 namespace cuFIXNUM {
 
 // TODO: Copy over functionality and documentation from IntmodVector.
-template< typename fixnum >
+template< typename fixnum_t >
 class fixnum_array {
 public:
     typedef std::uint8_t byte;
@@ -35,7 +35,7 @@ public:
     static void map(Args... args);
 
 private:
-    fixnum *ptr;
+    fixnum_t *ptr;
     int nelts;
 
     fixnum_array() {  }
@@ -44,9 +44,9 @@ private:
     fixnum_array &operator=(const fixnum_array &);
 };
 
-template< typename fixnum >
+template< typename fixnum_t >
 std::ostream &
-operator<<(std::ostream &os, const fixnum_array<fixnum> *fn_arr);
+operator<<(std::ostream &os, const fixnum_array<fixnum_t> *fn_arr);
 
 } // End namespace cuFIXNUM
 

@@ -9,82 +9,82 @@ namespace internal {
 template< typename fixnum_ >
 class monty {
 public:
-    typedef fixnum_ fixnum;
-    typedef fixnum modnum;
+    typedef fixnum_ fixnum_t;
+    typedef fixnum_ modnum_t;
 
-    __device__ monty(fixnum modulus);
+    __device__ monty(fixnum_t modulus);
 
-    __device__ void add(modnum &z, modnum x, modnum y) const {
-        fixnum::add(z, x, y);
-        if (fixnum::cmp(z, mod) >= 0)
-            fixnum::sub(z, z, mod);
+    __device__ void add(modnum_t &z, modnum_t x, modnum_t y) const {
+        fixnum_t::add(z, x, y);
+        if (fixnum_t::cmp(z, mod) >= 0)
+            fixnum_t::sub(z, z, mod);
     }
 
-    __device__ void neg(modnum &z, modnum x) const {
-        fixnum::sub(z, mod, x);
+    __device__ void neg(modnum_t &z, modnum_t x) const {
+        fixnum_t::sub(z, mod, x);
     }
 
-    __device__ void sub(modnum &z, modnum x, modnum y) const {
-        fixnum my;
+    __device__ void sub(modnum_t &z, modnum_t x, modnum_t y) const {
+        fixnum_t my;
         neg(my, y);
-        fixnum::add(z, x, my);
-        if (fixnum::cmp(z, mod) >= 0)
-            fixnum::sub(z, z, mod);
+        fixnum_t::add(z, x, my);
+        if (fixnum_t::cmp(z, mod) >= 0)
+            fixnum_t::sub(z, z, mod);
     }
 
     /*
      * Return the Montgomery image of one.
      */
-    __device__ modnum one() const {
+    __device__ modnum_t one() const {
         return R_mod;
     }
 
     /*
      * Return the Montgomery image of one.
      */
-    __device__ modnum zero() const {
-        return fixnum::zero();
+    __device__ modnum_t zero() const {
+        return fixnum_t::zero();
     }
 
     // FIXME: Get rid of this hack
     int is_valid;
 
     // Modulus for Monty arithmetic
-    fixnum mod;
-    // R_mod = 2^fixnum::BITS % mod
-    modnum R_mod;
+    fixnum_t mod;
+    // R_mod = 2^fixnum_t::BITS % mod
+    modnum_t R_mod;
     // Rsqr = R^2 % mod
-    modnum Rsqr_mod;
+    modnum_t Rsqr_mod;
 
     // TODO: We save this after using it in the constructor; work out
     // how to make it available for later use. For example, it could
     // be used to reduce arguments to modexp prior to the main
     // iteration.
-    quorem_preinv<fixnum> modrem;
+    quorem_preinv<fixnum_t> modrem;
 
-    __device__ void normalise(modnum &x, int msb) const;
+    __device__ void normalise(modnum_t &x, int msb) const;
 };
 
 
-template< typename fixnum >
+template< typename fixnum_t >
 __device__
-monty<fixnum>::monty(fixnum modulus)
+monty<fixnum_t>::monty(fixnum_t modulus)
 : mod(modulus), modrem(modulus)
 {
     // mod must be odd > 1 in order to calculate R^-1 mod "mod".
     // FIXME: Handle these errors properly
-    if (fixnum::two_valuation(modulus) != 0 //fixnum::get(modulus, 0) & 1 == 0
-            || fixnum::cmp(modulus, fixnum::one()) == 0) {
+    if (fixnum_t::two_valuation(modulus) != 0 //fixnum_t::get(modulus, 0) & 1 == 0
+            || fixnum_t::cmp(modulus, fixnum_t::one()) == 0) {
         is_valid = 0;
         return;
     }
     is_valid = 1;
 
-    fixnum Rsqr_hi, Rsqr_lo;
+    fixnum_t Rsqr_hi, Rsqr_lo;
 
     // R_mod = R % mod
-    modrem(R_mod, fixnum::one(), fixnum::zero());
-    fixnum::sqr_wide(Rsqr_hi, Rsqr_lo, R_mod);
+    modrem(R_mod, fixnum_t::one(), fixnum_t::zero());
+    fixnum_t::sqr_wide(Rsqr_hi, Rsqr_lo, R_mod);
     // Rsqr_mod = R^2 % mod
     modrem(Rsqr_mod, Rsqr_hi, Rsqr_lo);
 }
@@ -94,16 +94,16 @@ monty<fixnum>::monty(fixnum modulus)
  *
  * Assumes X < 2*m, i.e. msb = 0 or 1, and if msb = 1, then x < m.
  */
-template< typename fixnum >
+template< typename fixnum_t >
 __device__ void
-monty<fixnum>::normalise(modnum &x, int msb) const {
-    typedef typename fixnum::digit digit;
-    modnum r;
-    digit br;
+monty<fixnum_t>::normalise(modnum_t &x, int msb) const {
+    typedef typename fixnum_t::word_ft word_ft;
+    modnum_t r;
+    word_ft br;
 
     // br = 0 ==> x >= mod
-    fixnum::sub_br(r, br, x, mod);
-    if (msb || digit::is_zero(br)) {
+    fixnum_t::sub_br(r, br, x, mod);
+    if (msb || word_ft::is_zero(br)) {
         // If the msb was set, then we must have had to borrow.
         assert(!msb || msb == br);
         x = r;

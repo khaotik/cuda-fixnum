@@ -7,9 +7,9 @@ namespace cuFIXNUM {
 
 template<
     typename modnum_tp,
-    int WINDOW_SIZE = internal::bytes_to_k_ary_window_size(modnum_tp::fixnum::BYTES) >
+    int WINDOW_SIZE = internal::bytes_to_k_ary_window_size(modnum_tp::fixnum_t::BYTES) >
 class multi_modexp {
-    static_assert(WINDOW_SIZE >= 1 && WINDOW_SIZE < modnum_tp::fixnum::digit::BITS,
+    static_assert(WINDOW_SIZE >= 1 && WINDOW_SIZE < modnum_tp::fixnum_t::word_ft::BITS,
         "Invalid window size.");
 
     // TODO: Generalise multi_modexp so that it can work with any modular
@@ -17,12 +17,12 @@ class multi_modexp {
     const modnum_tp modnum;
 
 public:
-    typedef typename modnum_tp::fixnum fixnum;
+    using fixnum_t = typename modnum_tp::fixnum_t;
 
-    __device__ multi_modexp(fixnum mod)
+    __device__ multi_modexp(fixnum_t mod)
     : modnum(mod) { }
 
-    __device__ void operator()(fixnum &z, fixnum x, fixnum e) const;
+    __device__ void operator()(fixnum_t &z, fixnum_t x, fixnum_t e) const;
 };
 
 
@@ -58,17 +58,17 @@ public:
  */
 template< typename modnum_tp, int WINDOW_SIZE >
 __device__ void
-multi_modexp<modnum_tp, WINDOW_SIZE>::operator()(fixnum &z, fixnum x, fixnum e) const
+multi_modexp<modnum_tp, WINDOW_SIZE>::operator()(fixnum_t &z, fixnum_t x, fixnum_t e) const
 {
-    typedef typename modnum_tp::fixnum::digit digit;
-    static constexpr int WIDTH = fixnum::SLOT_WIDTH;
+    typedef typename modnum_tp::fixnum_t::word_ft word_ft;
+    static constexpr int WIDTH = fixnum_t::SLOT_WIDTH;
 
     // Window decomposition: digit::BITS = q * WINDOW_SIZE + r.
-    static constexpr int WINDOW_REM_BITS = digit::BITS % WINDOW_SIZE;
+    static constexpr int WINDOW_REM_BITS = word_ft::BITS % WINDOW_SIZE;
     static constexpr int WINDOW_MAX = (1U << WINDOW_SIZE);
 
     /* G[t] = z^t, t >= 0 */
-    fixnum G[WINDOW_MAX];
+    fixnum_t G[WINDOW_MAX];
     modnum.to_modnum(z, x);
     G[0] = modnum.one();
     for (int t = 1; t < WINDOW_MAX; ++t) {
@@ -78,22 +78,22 @@ multi_modexp<modnum_tp, WINDOW_SIZE>::operator()(fixnum &z, fixnum x, fixnum e) 
 
     z = G[0];
     for (int i = WIDTH - 1; i >= 0; --i) {
-        digit f = fixnum::get(e, i);
+        word_ft f = fixnum_t::get(e, i);
 
         // TODO: The squarings are noops on the first iteration (i =
         // w-1) and should be removed.
-        digit win; // TODO: Morally this should be an int
-        for (int j = digit::BITS - WINDOW_SIZE; j >= 0; j -= WINDOW_SIZE) {
+        word_ft win; // TODO: Morally this should be an int
+        for (int j = word_ft::BITS - WINDOW_SIZE; j >= 0; j -= WINDOW_SIZE) {
             // TODO: For some bizarre reason, it is significantly
             // faster to do this loop than it is to unroll the 5
             // statements manually.  Idem for the remainder below.
             // Investigate how this is even possible!
             for (int k = 0; k < WINDOW_SIZE; ++k)
                 modnum.sqr(z, z);
-            digit fj;
+            word_ft fj;
             // win = (f >> j) & WINDOW_MAIN_MASK;
-            digit::rshift(fj, f, j);
-            digit::rem_2exp(win, fj, WINDOW_SIZE);
+            word_ft::rshift(fj, f, j);
+            word_ft::rem_2exp(win, fj, WINDOW_SIZE);
             modnum.mul(z, z, G[win]);
         }
 
@@ -101,7 +101,7 @@ multi_modexp<modnum_tp, WINDOW_SIZE>::operator()(fixnum &z, fixnum x, fixnum e) 
         for (int k = 0; k < WINDOW_REM_BITS; ++k)
             modnum.sqr(z, z);
         //win = f & WINDOW_REM_MASK;
-        digit::rem_2exp(win, f, WINDOW_REM_BITS);
+        word_ft::rem_2exp(win, f, WINDOW_REM_BITS);
         modnum.mul(z, z, G[win]);
     }
     modnum.from_modnum(z, z);
