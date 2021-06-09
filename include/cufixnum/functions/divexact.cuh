@@ -14,7 +14,7 @@ public:
         // TODO: Handle even divisor. Should be easy: just make sure
         // the 2-part of the divisor and dividend are the same and
         // then remove them.
-        typename fixnum_t::digit b0 = fixnum_t::get(b, 0);
+        typename fixnum_t::digit_t b0 = fixnum_t::get(b, 0);
         assert(b0 & 1);
 
         // Calculate b inverse
