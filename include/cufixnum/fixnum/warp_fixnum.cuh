@@ -21,6 +21,7 @@ public:
     // arguments are interpreted component-wise, and with 'fixnum::' when
     // they're interpreted "across the slot".
     typedef digit_ digit;
+    typedef typename digit_::elem_t elem_t;
     typedef warp_fixnum fixnum;
 
     static constexpr int BYTES = BYTES_;
@@ -35,6 +36,9 @@ public:
     // TODO: Specialise std::is_integral for fixnum_u32?
     //static_assert(std::is_integral< digit >::value,
     //        "digit must be integral.");
+    struct packed_t {
+      elem_t data[SLOT_WIDTH];
+    };
 
 private:
     digit x;
@@ -90,6 +94,12 @@ public:
         memcpy(bytes, r, n);
         return n;
     }
+    __device__ static fixnum unpack(const packed_t arr) {
+      return fixnum(arr.data[layout::laneIdx()]);
+    }
+    __device__ void pack(packed_t &arr) {
+      arr.data[layout::laneIdx()] = x;
+    } 
 
     /*
      * Return digit at index idx.

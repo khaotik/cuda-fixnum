@@ -8,6 +8,7 @@ template< typename T >
 class word_fixnum {
 public:
     typedef T digit;
+    using elem_t = T;
     typedef word_fixnum fixnum;
 
     static constexpr int BYTES = sizeof(T);
