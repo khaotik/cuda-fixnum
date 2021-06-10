@@ -10,36 +10,20 @@ def write_vector(dest, elt_sz, v):
     for n in v:
         write_int(dest, elt_sz, n)
 
+def rotated_product(xs, nargs):
+    nchoice = len(xs)
+    offset_li = [0]*nargs
+    for i in range(nchoice**nargs):
+        q,r = divmod(i, nchoice)
+        offset_li[0] = r
+        for j in range(1,nargs):
+            (q,r),last_r = divmod(q,nchoice), r
+            offset_li[j] = (r+last_r) % nchoice
+        yield [xs[j] for j in offset_li]
+
 def mktests(op, xs, nargs, bits):
-    # FIXME: Refactor this.
-    if nargs == 1:
-        yield zip(*[op(x, bits) for x in xs])
-    elif nargs == 2:
-        ys = deque(xs)
-        for i in range(len(xs)):
-            yield zip(*[op(x, y, bits) for x, y in zip(xs, ys)])
-            ys.rotate(1)
-    elif nargs == 3:
-        ys = deque(xs)
-        zs = deque(xs)
-        for _ in range(len(xs)):
-            for _ in range(len(xs)):
-                yield list(zip(*[op(x, y, z, bits) for x, y, z in zip(xs, ys, zs)]))
-                zs.rotate(1)
-            ys.rotate(1)
-    elif nargs == 4:
-        ys = deque(xs)
-        zs = deque(xs)
-        ws = deque(xs)
-        for _ in range(len(xs)):
-            for _ in range(len(xs)):
-                for _ in range(len(xs)):
-                    yield list(zip(*[op(x, y, z, w, bits) for x, y, z, w in zip(xs, ys, zs, ws)]))
-                    ws.rotate(1)
-                zs.rotate(1)
-            ys.rotate(1)
-    else:
-        raise NotImplementedError()
+    for args in rotated_product(xs, nargs):
+        yield op(*args, bits)
 
 def write_tests(fname, arg):
     op, xs, nargs, nres, bits = arg
@@ -53,11 +37,12 @@ def write_tests(fname, arg):
         write_int(f, 4, vec_len)
         write_int(f, 4, nres)
         write_vector(f, fixnum_bytes, xs)
-        for v in mktests(op, xs, nargs, bits):
-            v = list(v)
-            assert len(v) == nres, 'bad result length; expected {}, got {}'.format(nres, len(v))
-            for res in v:
-                write_vector(f, fixnum_bytes, res)
+        for vec in mktests(op, xs, nargs, bits):
+            write_vector(f, fixnum_bytes, vec)
+            #  v = list(v)
+            #  assert len(v) == nres, 'bad result length; expected {}, got {}'.format(nres, len(v))
+            #  for res in v:
+                #  write_vector(f, fixnum_bytes, res)
     t = timer() - t
     print('done ({:.2f}s).'.format(t))
     return fname
