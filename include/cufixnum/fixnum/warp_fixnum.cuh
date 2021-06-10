@@ -2,6 +2,7 @@
 
 #include "cufixnum/fixnum/slot_layout.cuh"
 #include "cufixnum/fixnum/word_fixnum.cuh"
+#include "cufixnum/fixnum/packnum.cuh"
 
 namespace cuFIXNUM {
 
@@ -36,9 +37,11 @@ public:
     // TODO: Specialise std::is_integral for fixnum_u32?
     //static_assert(std::is_integral< digit >::value,
     //        "digit must be integral.");
+    using packed_t = packnum<BYTES, word_ft>;
+    /*
     struct packed_t {
       digit_t data[SLOT_WIDTH];
-    };
+    }; */
 
 private:
     word_ft x;
@@ -97,8 +100,10 @@ public:
     __device__ static warp_ft unpack(const packed_t arr) {
       return warp_ft(arr.data[layout::laneIdx()]);
     }
-    __device__ void pack(packed_t &arr) {
-      arr.data[layout::laneIdx()] = x;
+    __device__ packed_t pack() {
+      packed_t ret;
+      ret.data[layout::laneIdx()] = x;
+      return ret;
     } 
 
     /*
