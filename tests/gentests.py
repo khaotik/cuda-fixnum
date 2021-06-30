@@ -39,10 +39,6 @@ def write_tests(fname, arg):
         write_vector(f, fixnum_bytes, xs)
         for vec in mktests(op, xs, nargs, bits):
             write_vector(f, fixnum_bytes, vec)
-            #  v = list(v)
-            #  assert len(v) == nres, 'bad result length; expected {}, got {}'.format(nres, len(v))
-            #  for res in v:
-                #  write_vector(f, fixnum_bytes, res)
     t = timer() - t
     print('done ({:.2f}s).'.format(t))
     return fname
